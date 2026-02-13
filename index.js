@@ -106,6 +106,7 @@ app.get("/latest", async (req, res) => {
 //////////////////////////////////////////////////
 
 app.post("/smoke", async (req, res) => {
+  console.log("RAW BODY:", req.body);  // ⭐ เพิ่มบรรทัดนี้
 
   try {
 
