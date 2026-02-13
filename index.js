@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 //////////////////////////////////////////////////
-// 🔥 CONNECT POSTGRES
+// CONNECT POSTGRES
 //////////////////////////////////////////////////
 
 const pool = new Pool({
@@ -16,7 +16,7 @@ const pool = new Pool({
 });
 
 //////////////////////////////////////////////////
-// 🔥 AUTO CREATE TABLE
+// AUTO CREATE TABLE
 //////////////////////////////////////////////////
 
 async function initDB() {
@@ -41,7 +41,7 @@ async function initDB() {
 initDB();
 
 //////////////////////////////////////////////////
-// ✅ TEST ROUTE
+// ROOT
 //////////////////////////////////////////////////
 
 app.get("/", (req, res) => {
@@ -49,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 //////////////////////////////////////////////////
-// 🔥 TEST DB
+// TEST DB
 //////////////////////////////////////////////////
 
 app.get("/test-db", async (req, res) => {
@@ -60,21 +60,70 @@ app.get("/test-db", async (req, res) => {
 });
 
 //////////////////////////////////////////////////
-// 🔥 RECEIVE DATA FROM ESP8266
+// GET ALL LOGS ⭐⭐⭐
+//////////////////////////////////////////////////
+
+app.get("/logs", async (req, res) => {
+
+  try{
+
+    const result = await pool.query(
+      "SELECT * FROM smoke_logs ORDER BY created_at DESC LIMIT 50"
+    );
+
+    res.json(result.rows);
+
+  }catch(err){
+
+    console.error(err);
+    res.status(500).send("DB ERROR");
+  }
+});
+
+//////////////////////////////////////////////////
+// GET LATEST ⭐⭐⭐
+//////////////////////////////////////////////////
+
+app.get("/latest", async (req, res) => {
+
+  try{
+
+    const result = await pool.query(
+      "SELECT * FROM smoke_logs ORDER BY created_at DESC LIMIT 1"
+    );
+
+    res.json(result.rows[0]);
+
+  }catch(err){
+
+    console.error(err);
+    res.status(500).send("DB ERROR");
+  }
+});
+
+//////////////////////////////////////////////////
+// RECEIVE DATA FROM ESP8266 ⭐⭐⭐
 //////////////////////////////////////////////////
 
 app.post("/smoke", async (req, res) => {
 
   try {
 
-    const smokeValue = req.body.value;
+    // 🔥 รับได้ทั้ง value และ smoke
+    const smokeValue = req.body.value || req.body.smoke;
 
-    console.log("Smoke:", smokeValue);
+    if(smokeValue === undefined){
+      return res.status(400).send("No smoke value");
+    }
+
+    console.log("🔥 Smoke:", smokeValue);
 
     await pool.query(
       "INSERT INTO smoke_logs(smoke) VALUES($1)",
       [smokeValue]
     );
+
+    console.log("✅ SAVED TO DB");
 
     res.send("OK");
 
