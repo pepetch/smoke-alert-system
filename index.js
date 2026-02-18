@@ -24,18 +24,16 @@ async function startServer() {
     await pool.query("SELECT NOW()");
     console.log("✅ Database Connected");
 
-    // ลบทิ้งก่อน
-    await pool.query("DROP TABLE IF EXISTS smoke_logs;");
 
     // สร้างใหม่ให้ครบทุก column
     await pool.query(`
-      CREATE TABLE smoke_logs (
+      CREATE TABLE IF NOT EXISTS smoke_logs (
         id SERIAL PRIMARY KEY,
         smoke FLOAT,
         alcohol FLOAT,
         lpg FLOAT,
         status VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
