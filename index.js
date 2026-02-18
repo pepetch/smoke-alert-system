@@ -21,7 +21,6 @@ const pool = new Pool({
 
 async function startServer() {
   try {
-    // ทดสอบการเชื่อมต่อ DB
     await pool.query("SELECT NOW()");
     console.log("✅ Database Connected");
 
@@ -30,14 +29,23 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS smoke_logs (
         id SERIAL PRIMARY KEY,
         smoke FLOAT,
-        alcohol FLOAT,
-        lpg FLOAT,
         status VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    console.log("✅ smoke_logs table ready");
+    // เพิ่ม column ถ้ายังไม่มี (แก้ปัญหา alcohol / lpg หาย)
+    await pool.query(`
+      ALTER TABLE smoke_logs
+      ADD COLUMN IF NOT EXISTS alcohol FLOAT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE smoke_logs
+      ADD COLUMN IF NOT EXISTS lpg FLOAT;
+    `);
+
+    console.log("✅ Table structure ensured");
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
