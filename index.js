@@ -1,6 +1,5 @@
 const express = require("express");
 const { Pool } = require("pg");
-const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
@@ -11,30 +10,26 @@ app.use(express.json());
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
 });
 
 //////////////////////////////////////////////////
-// AUTO CREATE TABLE (เพิ่ม status)
+// AUTO CREATE TABLE
 //////////////////////////////////////////////////
 
 async function initDB() {
-  try {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS smoke_logs (
+      id SERIAL PRIMARY KEY,
+      smoke FLOAT,
+      alcohol FLOAT,
+      lpg FLOAT,
+      status VARCHAR(20),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS smoke_logs (
-        id SERIAL PRIMARY KEY,
-        smoke FLOAT,
-        status VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    console.log("✅ smoke_logs table ready");
-
-  } catch (err) {
-    console.error("DB ERROR:", err);
-  }
+  console.log("✅ smoke_logs table ready");
 }
 
 initDB();
@@ -52,12 +47,21 @@ app.get("/", (req, res) => {
 //////////////////////////////////////////////////
 
 app.get("/logs", async (req, res) => {
-
   try {
 
-    const result = await pool.query(
-      "SELECT * FROM smoke_logs ORDER BY created_at DESC LIMIT 100"
-    );
+    const result = await pool.query(`
+      SELECT 
+        id,
+        smoke,
+        alcohol,
+        lpg,
+        status,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
 
     res.json(result.rows);
 
@@ -71,13 +75,26 @@ app.get("/logs", async (req, res) => {
 // GET LATEST
 //////////////////////////////////////////////////
 
-app.get("/latest", async (req, res) => {
-
+app.get("/smocklog", async (req, res) => {
   try {
 
-    const result = await pool.query(
-      "SELECT * FROM smoke_logs ORDER BY created_at DESC LIMIT 1"
-    );
+    const result = await pool.query(`
+      SELECT 
+        id,
+        smoke,
+        alcohol,
+        lpg,
+        status,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+      return res.json({});
+    }
 
     res.json(result.rows[0]);
 
@@ -92,68 +109,26 @@ app.get("/latest", async (req, res) => {
 //////////////////////////////////////////////////
 
 app.post("/smoke", async (req, res) => {
-
   try {
 
-    const { smoke, status } = req.body;
+    const { smoke, alcohol, lpg, status } = req.body;
 
-    if (smoke === undefined || status === undefined) {
+    if (smoke === undefined || alcohol === undefined || lpg === undefined || !status) {
       return res.status(400).send("Missing data");
     }
 
-    console.log("🔥 Smoke:", smoke, "| Status:", status);
-
-    // Save DB
     await pool.query(
-      "INSERT INTO smoke_logs(smoke, status) VALUES($1, $2)",
-      [smoke, status]
+      "INSERT INTO smoke_logs(smoke, alcohol, lpg, status) VALUES($1,$2,$3,$4)",
+      [smoke, alcohol, lpg, status]
     );
-
-    console.log("✅ SAVED TO DB");
-
-    // Send LINE if DANGER or FIRE
-    if (status === "DANGER" || status === "FIRE") {
-      await sendLineAlert(smoke, status);
-    }
 
     res.send("OK");
 
   } catch (err) {
-
     console.error(err);
-    res.status(500).send("SERVER ERROR");
+    res.status(500).send("DB INSERT ERROR");
   }
 });
-
-//////////////////////////////////////////////////
-// LINE ALERT (ส่งจาก SERVER)
-//////////////////////////////////////////////////
-
-async function sendLineAlert(smoke, status) {
-
-  const LINE_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-
-  if (!LINE_TOKEN) {
-    console.log("⚠ LINE token not set");
-    return;
-  }
-
-  await fetch("https://api.line.me/v2/bot/message/broadcast", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${LINE_TOKEN}`
-    },
-    body: JSON.stringify({
-      messages: [{
-        type: "text",
-        text: `🚨 ALERT\nSmoke: ${smoke} ppm\nStatus: ${status}`
-      }]
-    })
-  });
-
-  console.log("📲 LINE SENT");
-}
 
 //////////////////////////////////////////////////
 
