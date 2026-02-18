@@ -36,6 +36,12 @@ async function startServer() {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // 🔥 เพิ่มบรรทัดนี้เข้าไป
+    await pool.query(`
+      ALTER TABLE smoke_logs
+      ALTER COLUMN created_at
+      SET DEFAULT (NOW() AT TIME ZONE 'Asia/Bangkok');
+    `);
 
     console.log("✅ Table recreated completely");
 
@@ -63,8 +69,7 @@ app.get("/logs", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -88,8 +93,7 @@ app.get("/smokelog", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -115,8 +119,7 @@ app.get("/table", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -141,20 +144,33 @@ app.get("/table", async (req, res) => {
       <html>
       <head>
         <title>Smoke Logs</title>
-        <style>
-          body { font-family: Arial; background:#111; color:white; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #555; padding: 8px; text-align:center; }
-          th { background:#222; }
-          tr:nth-child(even) { background:#1a1a1a; }
-        </style>
+      <style>
+        body { font-family: Arial; background:#111; color:white; }
+      
+        table {
+          border-collapse: collapse;
+          margin: 20px auto;      /* จัดกลาง */
+          width: auto;            /* ไม่ให้เต็มจอ */
+        }
+      
+        th, td {
+          border: 1px solid #555;
+          padding: 8px 14px;
+          text-align: center;
+          white-space: nowrap;    /* ไม่ให้แตกบรรทัด */
+        }
+      
+        th { background:#222; }
+      
+        tr:nth-child(even) { background:#1a1a1a; }
+      </style>
       </head>
       <body>
         <h2>🔥 Smoke Alert Logs</h2>
         <table>
           <tr>
             <th>ID</th>
-            <th>Created At</th>
+            <th>Datetime</th>
             <th>Smoke</th>
             <th>Alcohol</th>
             <th>LPG</th>
