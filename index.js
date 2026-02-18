@@ -236,6 +236,11 @@ app.post("/smoke", async (req, res) => {
   }
 });
 
-//////////////////////////////////////////////////
+// LINE Webhook
+app.post("/webhook", (req, res) => {
+  console.log("LINE Webhook Received:");
+  console.log(JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
+});
 
 startServer();
