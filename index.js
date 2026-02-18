@@ -24,28 +24,22 @@ async function startServer() {
     await pool.query("SELECT NOW()");
     console.log("✅ Database Connected");
 
-    // สร้างตารางถ้ายังไม่มี
+    // ลบทิ้งก่อน
+    await pool.query("DROP TABLE IF EXISTS smoke_logs;");
+
+    // สร้างใหม่ให้ครบทุก column
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS smoke_logs (
+      CREATE TABLE smoke_logs (
         id SERIAL PRIMARY KEY,
         smoke FLOAT,
+        alcohol FLOAT,
+        lpg FLOAT,
         status VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // เพิ่ม column ถ้ายังไม่มี (แก้ปัญหา alcohol / lpg หาย)
-    await pool.query(`
-      ALTER TABLE smoke_logs
-      ADD COLUMN IF NOT EXISTS alcohol FLOAT;
-    `);
-
-    await pool.query(`
-      ALTER TABLE smoke_logs
-      ADD COLUMN IF NOT EXISTS lpg FLOAT;
-    `);
-
-    console.log("✅ Table structure ensured");
+    console.log("✅ Table recreated completely");
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
@@ -56,7 +50,6 @@ async function startServer() {
     console.error("❌ STARTUP ERROR:", err);
   }
 }
-
 //////////////////////////////////////////////////
 // ROUTES
 //////////////////////////////////////////////////
