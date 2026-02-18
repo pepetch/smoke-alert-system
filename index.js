@@ -154,9 +154,10 @@ app.get("/table", async (req, res) => {
         }
       
         h2 {
-          text-align:center;
+          text-align: left;
+          margin-bottom: 20px;
+          padding-left: 5px;
         }
-      
         .table-container {
           width:100%;
           overflow-x:auto; /* เลื่อนซ้ายขวาได้ในมือถือ */
