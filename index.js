@@ -110,6 +110,66 @@ app.get("/smokelog", async (req, res) => {
     res.status(500).send("DB ERROR");
   }
 });
+app.get("/table", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        smoke,
+        alcohol,
+        lpg,
+        status,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
+
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.smoke}</td>
+        <td>${row.alcohol}</td>
+        <td>${row.lpg}</td>
+        <td>${row.status}</td>
+        <td>${row.created_at}</td>
+      </tr>
+    `).join("");
+
+    res.send(`
+      <html>
+      <head>
+        <title>Smoke Logs</title>
+        <style>
+          body { font-family: Arial; background:#111; color:white; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #555; padding: 8px; text-align:center; }
+          th { background:#222; }
+          tr:nth-child(even) { background:#1a1a1a; }
+        </style>
+      </head>
+      <body>
+        <h2>🔥 Smoke Alert Logs</h2>
+        <table>
+          <tr>
+            <th>ID</th>
+            <th>Smoke</th>
+            <th>Alcohol</th>
+            <th>LPG</th>
+            <th>Status</th>
+            <th>Created At</th>
+          </tr>
+          ${rows}
+        </table>
+      </body>
+      </html>
+    `);
+
+  } catch (err) {
+    res.status(500).send("DB ERROR");
+  }
+});
 
 // Receive data from ESP8266
 app.post("/smoke", async (req, res) => {
