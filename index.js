@@ -10,45 +10,57 @@ app.use(express.json());
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 //////////////////////////////////////////////////
-// AUTO CREATE TABLE
+// START SERVER AFTER DB READY
 //////////////////////////////////////////////////
 
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS smoke_logs (
-      id SERIAL PRIMARY KEY,
-      smoke FLOAT,
-      alcohol FLOAT,
-      lpg FLOAT,
-      status VARCHAR(20),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+async function startServer() {
+  try {
+    // ทดสอบการเชื่อมต่อ DB
+    await pool.query("SELECT NOW()");
+    console.log("✅ Database Connected");
 
-  console.log("✅ smoke_logs table ready");
+    // สร้างตารางถ้ายังไม่มี
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS smoke_logs (
+        id SERIAL PRIMARY KEY,
+        smoke FLOAT,
+        alcohol FLOAT,
+        lpg FLOAT,
+        status VARCHAR(20),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    console.log("✅ smoke_logs table ready");
+
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log("🔥 Server running on port", PORT);
+    });
+
+  } catch (err) {
+    console.error("❌ STARTUP ERROR:", err);
+  }
 }
 
-initDB();
-
 //////////////////////////////////////////////////
-// ROOT
+// ROUTES
 //////////////////////////////////////////////////
 
+// Root
 app.get("/", (req, res) => {
   res.send("🔥 Smoke Alert Server Running...");
 });
 
-//////////////////////////////////////////////////
-// GET ALL LOGS
-//////////////////////////////////////////////////
-
+// Get all logs
 app.get("/logs", async (req, res) => {
   try {
-
     const result = await pool.query(`
       SELECT 
         id,
@@ -66,18 +78,14 @@ app.get("/logs", async (req, res) => {
     res.json(result.rows);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ GET LOGS ERROR:", err);
     res.status(500).send("DB ERROR");
   }
 });
 
-//////////////////////////////////////////////////
-// GET LATEST
-//////////////////////////////////////////////////
-
-app.get("/smocklog", async (req, res) => {
+// Get latest log
+app.get("/smokelog", async (req, res) => {
   try {
-
     const result = await pool.query(`
       SELECT 
         id,
@@ -99,21 +107,22 @@ app.get("/smocklog", async (req, res) => {
     res.json(result.rows[0]);
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ GET LATEST ERROR:", err);
     res.status(500).send("DB ERROR");
   }
 });
 
-//////////////////////////////////////////////////
-// RECEIVE DATA FROM ESP8266
-//////////////////////////////////////////////////
-
+// Receive data from ESP8266
 app.post("/smoke", async (req, res) => {
   try {
-
     const { smoke, alcohol, lpg, status } = req.body;
 
-    if (smoke === undefined || alcohol === undefined || lpg === undefined || !status) {
+    if (
+      smoke === undefined ||
+      alcohol === undefined ||
+      lpg === undefined ||
+      !status
+    ) {
       return res.status(400).send("Missing data");
     }
 
@@ -125,15 +134,11 @@ app.post("/smoke", async (req, res) => {
     res.send("OK");
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ INSERT ERROR:", err);
     res.status(500).send("DB INSERT ERROR");
   }
 });
 
 //////////////////////////////////////////////////
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("🔥 Server running on port", PORT);
-});
+startServer();
