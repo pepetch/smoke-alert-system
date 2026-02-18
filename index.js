@@ -145,39 +145,60 @@ app.get("/table", async (req, res) => {
       <head>
         <title>Smoke Logs</title>
       <style>
-        body { font-family: Arial; background:#111; color:white; }
+        body {
+          font-family: Arial;
+          background:#111;
+          color:white;
+          margin:0;
+          padding:20px;
+        }
+      
+        h2 {
+          text-align:center;
+        }
+      
+        .table-container {
+          width:100%;
+          overflow-x:auto; /* เลื่อนซ้ายขวาได้ในมือถือ */
+        }
       
         table {
           border-collapse: collapse;
-          margin: 20px auto;      /* จัดกลาง */
-          width: auto;            /* ไม่ให้เต็มจอ */
+          width:100%;          /* เต็มจอ */
+          min-width:700px;     /* กันตารางบีบเกินไป */
         }
       
         th, td {
           border: 1px solid #555;
-          padding: 8px 14px;
+          padding: 10px;
           text-align: center;
-          white-space: nowrap;    /* ไม่ให้แตกบรรทัด */
+          white-space: nowrap;
         }
       
-        th { background:#222; }
+        th {
+          background:#222;
+        }
       
-        tr:nth-child(even) { background:#1a1a1a; }
+        tr:nth-child(even) {
+          background:#1a1a1a;
+        }
       </style>
       </head>
       <body>
         <h2>🔥 Smoke Alert Logs</h2>
-        <table>
-          <tr>
-            <th>ID</th>
-            <th>Datetime</th>
-            <th>Smoke</th>
-            <th>Alcohol</th>
-            <th>LPG</th>
-            <th>Status</th>
-          </tr>
-          ${rows}
-        </table>
+        <div class="table-container">
+          <table>
+            <tr>
+              <th>ID</th>
+              <th>Datetime</th>
+              <th>Smoke</th>
+              <th>Alcohol</th>
+              <th>LPG</th>
+              <th>Status</th>
+            </tr>
+            ${rows}
+          </table>
+        </div>
       </body>
       </html>
     `);
