@@ -63,12 +63,12 @@ app.get("/logs", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
-        status,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at
+        status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -88,12 +88,12 @@ app.get("/smokelog", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
-        status,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at
+        status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 1
@@ -115,12 +115,12 @@ app.get("/table", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
+                'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
-        status,
-        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok',
-                'DD/MM/YYYY HH24:MI:SS') AS created_at
+        status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -129,11 +129,11 @@ app.get("/table", async (req, res) => {
     let rows = result.rows.map(row => `
       <tr>
         <td>${row.id}</td>
+        <td>${row.created_at}</td>
         <td>${row.smoke}</td>
         <td>${row.alcohol}</td>
         <td>${row.lpg}</td>
         <td>${row.status}</td>
-        <td>${row.created_at}</td>
       </tr>
     `).join("");
 
@@ -154,11 +154,11 @@ app.get("/table", async (req, res) => {
         <table>
           <tr>
             <th>ID</th>
+            <th>Created At</th>
             <th>Smoke</th>
             <th>Alcohol</th>
             <th>LPG</th>
             <th>Status</th>
-            <th>Created At</th>
           </tr>
           ${rows}
         </table>
