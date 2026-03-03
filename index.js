@@ -19,7 +19,7 @@ const pool = new Pool({
 // 🔥 TEMPLATE FUNCTION (วางตรงนี้)
 //////////////////////////////////////////////////
 
-function renderSubPage(title, headers, rows) {
+function renderSubPage(title, headers, rows, exportUrl) {
   return `
   <html>
   <head>
@@ -37,19 +37,32 @@ function renderSubPage(title, headers, rows) {
         margin-bottom:15px;
       }
 
-      .btn-back {
+      .btn {
         display:inline-block;
         padding:10px 15px;
-        background:#007bff;
-        color:white;
         border-radius:5px;
         text-decoration:none;
-        margin-bottom:15px;
+        margin-right:10px;
+        color:white;
+        font-weight:bold;
+      }
+
+      .btn-back {
+        background:#007bff;
+      }
+
+      .btn-export {
+        background:#28a745;
+      }
+
+      .btn-clear {
+        background:#dc3545;
       }
 
       table {
         border-collapse: collapse;
         width:100%;
+        margin-top:15px;
       }
 
       th, td {
@@ -70,7 +83,12 @@ function renderSubPage(title, headers, rows) {
   <body>
 
     <h2>${title}</h2>
-    <a href="/table" class="btn-back">⬅ Back to Dashboard</a>
+
+    <div>
+      <a href="/table" class="btn btn-back">⬅ Back</a>
+      <a href="${exportUrl}" class="btn btn-export">📊 Export</a>
+      <a href="/delete-all" class="btn btn-clear">🗑 Clear</a>
+    </div>
 
     <table>
       ${headers}
@@ -81,6 +99,7 @@ function renderSubPage(title, headers, rows) {
   </html>
   `;
 }
+
 //////////////////////////////////////////////////
 // START SERVER AFTER DB READY
 //////////////////////////////////////////////////
@@ -397,7 +416,7 @@ app.get("/smoke-data", async (req, res) => {
       <a href="/export-smoke" class="btn-back" style="background:#28a745;">
         📊 Export Excel
       </a>
-      ${renderSubPage("🔥 Smoke Data", headers, rows)}
+      ${renderSubPage("🔥 Smoke Data", headers, rows, "/export-smoke")}
     `);
 
   } catch (err) {
@@ -439,7 +458,7 @@ app.get("/alcohol-data", async (req, res) => {
       <a href="/export-alcohol" class="btn-back" style="background:#28a745;">
         📊 Export Excel
       </a>
-      ${renderSubPage("🍺 Alcohol Data", headers, rows)}
+      ${renderSubPage("🍺 Alcohol Data", headers, rows, "/export-alcohol")}
     `);
 
   } catch (err) {
@@ -481,7 +500,7 @@ app.get("/lpg-data", async (req, res) => {
       <a href="/export-lpg" class="btn-back" style="background:#28a745;">
         📊 Export Excel
       </a>
-      ${renderSubPage("🔥 LPG Data", headers, rows)}
+      ${renderSubPage("🔥 LPG Data", headers, rows, "/export-lpg")}
     `);
 
   } catch (err) {
