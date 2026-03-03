@@ -211,17 +211,31 @@ res.send(`
 
     <h2>🔥 Smoke Alert Logs</h2>
 
-    <div style="margin-bottom:15px;">
-      <a href="/export-excel" class="btn-export">
-        📊 Export Excel
-      </a>
-
-      <form action="/delete-all" method="GET" style="display:inline;">
-        <button type="submit" class="btn-delete">
-          🗑 Clear Data
-        </button>
-      </form>
-    </div>
+  <div style="margin-bottom:15px;">
+  
+    <a href="/export-excel" class="btn-export">
+      📊 Export Excel
+    </a>
+  
+    <a href="/smoke-data" class="btn-export">
+      🔥 Smoke
+    </a>
+  
+    <a href="/alcohol-data" class="btn-export">
+      🍺 Alcohol
+    </a>
+  
+    <a href="/lpg-data" class="btn-export">
+      🔥 LPG
+    </a>
+  
+    <form action="/delete-all" method="GET" style="display:inline;">
+      <button type="submit" class="btn-delete">
+        🗑 Clear Data
+      </button>
+    </form>
+  
+  </div>
 
     <div class="table-container">
       <table>
@@ -270,6 +284,116 @@ app.post("/smoke", async (req, res) => {
   } catch (err) {
     console.error("❌ INSERT ERROR:", err);
     res.status(500).send("DB INSERT ERROR");
+  }
+});
+app.get("/smoke-data", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      smoke
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
+
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.smoke}</td>
+      </tr>
+    `).join("");
+
+    res.send(`
+      <h2>🔥 Smoke Data</h2>
+      <a href="/table">⬅ Back</a>
+      <table border="1" cellpadding="8">
+        <tr>
+          <th>ID</th>
+          <th>Datetime</th>
+          <th>Smoke</th>
+        </tr>
+        ${rows}
+      </table>
+    `);
+
+  } catch (err) {
+    res.status(500).send("DB ERROR");
+  }
+});
+
+app.get("/alcohol-data", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      alcohol
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
+
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.alcohol}</td>
+      </tr>
+    `).join("");
+
+    res.send(`
+      <h2>🍺 Alcohol Data</h2>
+      <a href="/table">⬅ Back</a>
+      <table border="1" cellpadding="8">
+        <tr>
+          <th>ID</th>
+          <th>Datetime</th>
+          <th>Alcohol</th>
+        </tr>
+        ${rows}
+      </table>
+    `);
+
+  } catch (err) {
+    res.status(500).send("DB ERROR");
+  }
+});
+
+app.get("/lpg-data", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      lpg
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
+
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.lpg}</td>
+      </tr>
+    `).join("");
+
+    res.send(`
+      <h2>🔥 LPG Data</h2>
+      <a href="/table">⬅ Back</a>
+      <table border="1" cellpadding="8">
+        <tr>
+          <th>ID</th>
+          <th>Datetime</th>
+          <th>LPG</th>
+        </tr>
+        ${rows}
+      </table>
+    `);
+
+  } catch (err) {
+    res.status(500).send("DB ERROR");
   }
 });
 
