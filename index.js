@@ -243,7 +243,7 @@ app.post("/webhook", (req, res) => {
   res.sendStatus(200);
 });
 // 🔥 Delete all logs
-app.delete("/delete-all", async (req, res) => {
+app.get("/delete-all", async (req, res) => {
   try {
     await pool.query("TRUNCATE TABLE smoke_logs RESTART IDENTITY;");
     res.json({ message: "All logs deleted successfully" });
