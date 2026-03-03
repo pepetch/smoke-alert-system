@@ -34,29 +34,37 @@ function renderSubPage(title, headers, rows, exportUrl) {
       }
 
       h2 {
-        margin-bottom:15px;
-      }
-
-      .btn {
-        display:inline-block;
-        padding:10px 15px;
-        border-radius:5px;
-        text-decoration:none;
-        margin-right:10px;
-        color:white;
-        font-weight:bold;
-      }
-
-      .btn-back {
-        background:#007bff;
+        margin-bottom: 15px;
       }
 
       .btn-export {
         background:#28a745;
+        color:white;
+        text-decoration:none;
+        padding:10px 15px;
+        border-radius:5px;
+        margin-right:10px;
+        display:inline-block;
       }
 
-      .btn-clear {
+      .btn-delete {
         background:#dc3545;
+        color:white;
+        padding:10px 15px;
+        border-radius:5px;
+        text-decoration:none;
+        margin-right:10px;
+        display:inline-block;
+      }
+
+      .btn-back {
+        background:#007bff;
+        color:white;
+        padding:10px 15px;
+        border-radius:5px;
+        text-decoration:none;
+        margin-right:10px;
+        display:inline-block;
       }
 
       table {
@@ -66,9 +74,9 @@ function renderSubPage(title, headers, rows, exportUrl) {
       }
 
       th, td {
-        border:1px solid #555;
-        padding:10px;
-        text-align:center;
+        border: 1px solid #555;
+        padding: 10px;
+        text-align: center;
       }
 
       th {
@@ -78,16 +86,17 @@ function renderSubPage(title, headers, rows, exportUrl) {
       tr:nth-child(even) {
         background:#1a1a1a;
       }
+
     </style>
   </head>
   <body>
 
     <h2>${title}</h2>
 
-    <div>
-      <a href="/table" class="btn btn-back">⬅ Back</a>
-      <a href="${exportUrl}" class="btn btn-export">📊 Export</a>
-      <a href="/delete-all" class="btn btn-clear">🗑 Clear</a>
+    <div style="margin-bottom:15px;">
+      <a href="/table" class="btn-back">⬅ Back</a>
+      <a href="${exportUrl}" class="btn-export">📊 Export Excel</a>
+      <a href="/delete-all" class="btn-delete">🗑 Clear Data</a>
     </div>
 
     <table>
