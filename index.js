@@ -15,7 +15,72 @@ const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false,
 });
+//////////////////////////////////////////////////
+// 🔥 TEMPLATE FUNCTION (วางตรงนี้)
+//////////////////////////////////////////////////
 
+function renderSubPage(title, headers, rows) {
+  return `
+  <html>
+  <head>
+    <title>${title}</title>
+    <style>
+      body {
+        font-family: Arial;
+        background:#111;
+        color:white;
+        margin:0;
+        padding:20px;
+      }
+
+      h2 {
+        margin-bottom:15px;
+      }
+
+      .btn-back {
+        display:inline-block;
+        padding:10px 15px;
+        background:#007bff;
+        color:white;
+        border-radius:5px;
+        text-decoration:none;
+        margin-bottom:15px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width:100%;
+      }
+
+      th, td {
+        border:1px solid #555;
+        padding:10px;
+        text-align:center;
+      }
+
+      th {
+        background:#222;
+      }
+
+      tr:nth-child(even) {
+        background:#1a1a1a;
+      }
+    </style>
+  </head>
+  <body>
+
+    <h2>${title}</h2>
+    <a href="/table" class="btn-back">⬅ Back to Dashboard</a>
+
+    <table>
+      ${headers}
+      ${rows}
+    </table>
+
+  </body>
+  </html>
+  `;
+}
 //////////////////////////////////////////////////
 // START SERVER AFTER DB READY
 //////////////////////////////////////////////////
@@ -130,16 +195,27 @@ app.get("/table", async (req, res) => {
       LIMIT 50
     `);
 
-    let rows = result.rows.map(row => `
-      <tr>
-        <td>${row.id}</td>
-        <td>${row.created_at}</td>
-        <td>${row.smoke}</td>
-        <td>${row.alcohol}</td>
-        <td>${row.lpg}</td>
-        <td>${row.status}</td>
-      </tr>
-    `).join("");
+  let rows = result.rows.map(row => {
+  
+    let color = "#28a745"; // SAFE
+  
+    if(row.status === "WARNING") color = "#ffc107";
+    if(row.status === "DANGER")  color = "#fd7e14";
+    if(row.status === "FIRE")    color = "#dc3545";
+  
+    return `
+    <tr>
+      <td>${row.id}</td>
+      <td>${row.created_at}</td>
+      <td>${row.smoke}</td>
+      <td>${row.alcohol}</td>
+      <td>${row.lpg}</td>
+      <td style="color:${color}; font-weight:bold;">
+        ${row.status}
+      </td>
+    </tr>
+    `;
+  }).join("");
 
 res.send(`
   <html>
@@ -288,36 +364,35 @@ app.post("/smoke", async (req, res) => {
 });
 app.get("/smoke-data", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-      smoke
-      FROM smoke_logs
-      ORDER BY id DESC
-      LIMIT 50
-    `);
+  const result = await pool.query(`
+    SELECT id,
+    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+    smoke,
+    status
+    FROM smoke_logs
+    ORDER BY id DESC
+    LIMIT 50
+  `);
 
-    let rows = result.rows.map(row => `
-      <tr>
-        <td>${row.id}</td>
-        <td>${row.created_at}</td>
-        <td>${row.smoke}</td>
-      </tr>
-    `).join("");
+  let headers = `
+    <tr>
+      <th>ID</th>
+      <th>Datetime</th>
+      <th>Smoke</th>
+      <th>Status</th>
+    </tr>
+  `;
 
-    res.send(`
-      <h2>🔥 Smoke Data</h2>
-      <a href="/table">⬅ Back</a>
-      <table border="1" cellpadding="8">
-        <tr>
-          <th>ID</th>
-          <th>Datetime</th>
-          <th>Smoke</th>
-        </tr>
-        ${rows}
-      </table>
-    `);
+  let rows = result.rows.map(row => `
+    <tr>
+      <td>${row.id}</td>
+      <td>${row.created_at}</td>
+      <td>${row.smoke}</td>
+      <td>${row.status}</td>
+    </tr>
+  `).join("");
 
+  res.send(renderSubPage("🔥 Smoke Data", headers, rows));
   } catch (err) {
     res.status(500).send("DB ERROR");
   }
@@ -325,73 +400,71 @@ app.get("/smoke-data", async (req, res) => {
 
 app.get("/alcohol-data", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-      alcohol
-      FROM smoke_logs
-      ORDER BY id DESC
-      LIMIT 50
-    `);
+  const result = await pool.query(`
+    SELECT id,
+    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+    alcohol,
+    status
+    FROM smoke_logs
+    ORDER BY id DESC
+    LIMIT 50
+  `);
 
-    let rows = result.rows.map(row => `
-      <tr>
-        <td>${row.id}</td>
-        <td>${row.created_at}</td>
-        <td>${row.alcohol}</td>
-      </tr>
-    `).join("");
+  let headers = `
+    <tr>
+      <th>ID</th>
+      <th>Datetime</th>
+      <th>Alcohol</th>
+      <th>Status</th>
+    </tr>
+  `;
 
-    res.send(`
-      <h2>🍺 Alcohol Data</h2>
-      <a href="/table">⬅ Back</a>
-      <table border="1" cellpadding="8">
-        <tr>
-          <th>ID</th>
-          <th>Datetime</th>
-          <th>Alcohol</th>
-        </tr>
-        ${rows}
-      </table>
-    `);
+  let rows = result.rows.map(row => `
+    <tr>
+      <td>${row.id}</td>
+      <td>${row.created_at}</td>
+      <td>${row.alcohol}</td>
+      <td>${row.status}</td>
+    </tr>
+  `).join("");
 
-  } catch (err) {
+  res.send(renderSubPage("🍺 Alcohol Data", headers, rows));
+    } catch (err) {
     res.status(500).send("DB ERROR");
   }
 });
 
 app.get("/lpg-data", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-      lpg
-      FROM smoke_logs
-      ORDER BY id DESC
-      LIMIT 50
-    `);
+  const result = await pool.query(`
+    SELECT id,
+    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+    lpg,
+    status
+    FROM smoke_logs
+    ORDER BY id DESC
+    LIMIT 50
+  `);
 
-    let rows = result.rows.map(row => `
-      <tr>
-        <td>${row.id}</td>
-        <td>${row.created_at}</td>
-        <td>${row.lpg}</td>
-      </tr>
-    `).join("");
+  let headers = `
+    <tr>
+      <th>ID</th>
+      <th>Datetime</th>
+      <th>LPG</th>
+      <th>Status</th>
+    </tr>
+  `;
 
-    res.send(`
-      <h2>🔥 LPG Data</h2>
-      <a href="/table">⬅ Back</a>
-      <table border="1" cellpadding="8">
-        <tr>
-          <th>ID</th>
-          <th>Datetime</th>
-          <th>LPG</th>
-        </tr>
-        ${rows}
-      </table>
-    `);
+  let rows = result.rows.map(row => `
+    <tr>
+      <td>${row.id}</td>
+      <td>${row.created_at}</td>
+      <td>${row.lpg}</td>
+      <td>${row.status}</td>
+    </tr>
+  `).join("");
 
+  res.send(renderSubPage("🔥 LPG Data", headers, rows));
   } catch (err) {
     res.status(500).send("DB ERROR");
   }
