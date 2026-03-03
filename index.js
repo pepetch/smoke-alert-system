@@ -421,12 +421,9 @@ app.get("/smoke-data", async (req, res) => {
       </tr>
     `).join("");
 
-    res.send(`
-      <a href="/export-smoke" class="btn-back" style="background:#28a745;">
-        📊 Export Excel
-      </a>
-      ${renderSubPage("🔥 Smoke Data", headers, rows, "/export-smoke")}
-    `);
+res.send(
+  renderSubPage("🔥 Smoke Data", headers, rows, "/export-smoke")
+);
 
   } catch (err) {
     res.status(500).send("DB ERROR");
@@ -463,12 +460,9 @@ app.get("/alcohol-data", async (req, res) => {
       </tr>
     `).join("");
 
-    res.send(`
-      <a href="/export-alcohol" class="btn-back" style="background:#28a745;">
-        📊 Export Excel
-      </a>
-      ${renderSubPage("🍺 Alcohol Data", headers, rows, "/export-alcohol")}
-    `);
+res.send(
+  renderSubPage("🍺 Alcohol Data", headers, rows, "/export-alcohol")
+);
 
   } catch (err) {
     res.status(500).send("DB ERROR");
@@ -505,12 +499,9 @@ app.get("/lpg-data", async (req, res) => {
       </tr>
     `).join("");
 
-    res.send(`
-      <a href="/export-lpg" class="btn-back" style="background:#28a745;">
-        📊 Export Excel
-      </a>
-      ${renderSubPage("🔥 LPG Data", headers, rows, "/export-lpg")}
-    `);
+res.send(
+  renderSubPage("🔥 LPG Data", headers, rows, "/export-lpg")
+);
 
   } catch (err) {
     res.status(500).send("DB ERROR");
@@ -649,7 +640,6 @@ app.get("/export-alcohol", async (req, res) => {
     res.status(500).send("EXPORT ERROR");
   }
 });
-
 
 // 🔥 Export LPG Only
 app.get("/export-lpg", async (req, res) => {
