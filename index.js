@@ -362,37 +362,44 @@ app.post("/smoke", async (req, res) => {
     res.status(500).send("DB INSERT ERROR");
   }
 });
+
 app.get("/smoke-data", async (req, res) => {
   try {
-  const result = await pool.query(`
-    SELECT id,
-    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-    smoke,
-    status
-    FROM smoke_logs
-    ORDER BY id DESC
-    LIMIT 50
-  `);
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      smoke,
+      status
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
 
-  let headers = `
-    <tr>
-      <th>ID</th>
-      <th>Datetime</th>
-      <th>Smoke</th>
-      <th>Status</th>
-    </tr>
-  `;
+    let headers = `
+      <tr>
+        <th>ID</th>
+        <th>Datetime</th>
+        <th>Smoke</th>
+        <th>Status</th>
+      </tr>
+    `;
 
-  let rows = result.rows.map(row => `
-    <tr>
-      <td>${row.id}</td>
-      <td>${row.created_at}</td>
-      <td>${row.smoke}</td>
-      <td>${row.status}</td>
-    </tr>
-  `).join("");
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.smoke}</td>
+        <td>${row.status}</td>
+      </tr>
+    `).join("");
 
-  res.send(renderSubPage("🔥 Smoke Data", headers, rows));
+    res.send(`
+      <a href="/export-smoke" class="btn-back" style="background:#28a745;">
+        📊 Export Excel
+      </a>
+      ${renderSubPage("🔥 Smoke Data", headers, rows)}
+    `);
+
   } catch (err) {
     res.status(500).send("DB ERROR");
   }
@@ -400,71 +407,83 @@ app.get("/smoke-data", async (req, res) => {
 
 app.get("/alcohol-data", async (req, res) => {
   try {
-  const result = await pool.query(`
-    SELECT id,
-    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-    alcohol,
-    status
-    FROM smoke_logs
-    ORDER BY id DESC
-    LIMIT 50
-  `);
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      alcohol,
+      status
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
 
-  let headers = `
-    <tr>
-      <th>ID</th>
-      <th>Datetime</th>
-      <th>Alcohol</th>
-      <th>Status</th>
-    </tr>
-  `;
+    let headers = `
+      <tr>
+        <th>ID</th>
+        <th>Datetime</th>
+        <th>Alcohol</th>
+        <th>Status</th>
+      </tr>
+    `;
 
-  let rows = result.rows.map(row => `
-    <tr>
-      <td>${row.id}</td>
-      <td>${row.created_at}</td>
-      <td>${row.alcohol}</td>
-      <td>${row.status}</td>
-    </tr>
-  `).join("");
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.alcohol}</td>
+        <td>${row.status}</td>
+      </tr>
+    `).join("");
 
-  res.send(renderSubPage("🍺 Alcohol Data", headers, rows));
-    } catch (err) {
+    res.send(`
+      <a href="/export-alcohol" class="btn-back" style="background:#28a745;">
+        📊 Export Excel
+      </a>
+      ${renderSubPage("🍺 Alcohol Data", headers, rows)}
+    `);
+
+  } catch (err) {
     res.status(500).send("DB ERROR");
   }
 });
 
 app.get("/lpg-data", async (req, res) => {
   try {
-  const result = await pool.query(`
-    SELECT id,
-    TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-    lpg,
-    status
-    FROM smoke_logs
-    ORDER BY id DESC
-    LIMIT 50
-  `);
+    const result = await pool.query(`
+      SELECT id,
+      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      lpg,
+      status
+      FROM smoke_logs
+      ORDER BY id DESC
+      LIMIT 50
+    `);
 
-  let headers = `
-    <tr>
-      <th>ID</th>
-      <th>Datetime</th>
-      <th>LPG</th>
-      <th>Status</th>
-    </tr>
-  `;
+    let headers = `
+      <tr>
+        <th>ID</th>
+        <th>Datetime</th>
+        <th>LPG</th>
+        <th>Status</th>
+      </tr>
+    `;
 
-  let rows = result.rows.map(row => `
-    <tr>
-      <td>${row.id}</td>
-      <td>${row.created_at}</td>
-      <td>${row.lpg}</td>
-      <td>${row.status}</td>
-    </tr>
-  `).join("");
+    let rows = result.rows.map(row => `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.created_at}</td>
+        <td>${row.lpg}</td>
+        <td>${row.status}</td>
+      </tr>
+    `).join("");
 
-  res.send(renderSubPage("🔥 LPG Data", headers, rows));
+    res.send(`
+      <a href="/export-lpg" class="btn-back" style="background:#28a745;">
+        📊 Export Excel
+      </a>
+      ${renderSubPage("🔥 LPG Data", headers, rows)}
+    `);
+
   } catch (err) {
     res.status(500).send("DB ERROR");
   }
@@ -531,6 +550,109 @@ app.get("/export-excel", async (req, res) => {
 
   } catch (err) {
     console.error("❌ EXPORT ERROR:", err);
+    res.status(500).send("EXPORT ERROR");
+  }
+});
+// 🔥 Export Smoke Only
+app.get("/export-smoke", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, created_at, smoke, status
+      FROM smoke_logs
+      ORDER BY id DESC
+    `);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Smoke Data");
+
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Datetime", key: "created_at", width: 25 },
+      { header: "Smoke", key: "smoke", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    result.rows.forEach(row => worksheet.addRow(row));
+
+    res.setHeader("Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition",
+      "attachment; filename=smoke_data.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    res.status(500).send("EXPORT ERROR");
+  }
+});
+
+
+// 🍺 Export Alcohol Only
+app.get("/export-alcohol", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, created_at, alcohol, status
+      FROM smoke_logs
+      ORDER BY id DESC
+    `);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Alcohol Data");
+
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Datetime", key: "created_at", width: 25 },
+      { header: "Alcohol", key: "alcohol", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    result.rows.forEach(row => worksheet.addRow(row));
+
+    res.setHeader("Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition",
+      "attachment; filename=alcohol_data.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    res.status(500).send("EXPORT ERROR");
+  }
+});
+
+
+// 🔥 Export LPG Only
+app.get("/export-lpg", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, created_at, lpg, status
+      FROM smoke_logs
+      ORDER BY id DESC
+    `);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("LPG Data");
+
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Datetime", key: "created_at", width: 25 },
+      { header: "LPG", key: "lpg", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    result.rows.forEach(row => worksheet.addRow(row));
+
+    res.setHeader("Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition",
+      "attachment; filename=lpg_data.xlsx");
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
     res.status(500).send("EXPORT ERROR");
   }
 });
