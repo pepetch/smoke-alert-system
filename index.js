@@ -1,5 +1,6 @@
 const express = require("express");
 const { Pool } = require("pg");
+const ExcelJS = require("exceljs");
 
 const app = express();
 app.use(express.json());
@@ -140,69 +141,105 @@ app.get("/table", async (req, res) => {
       </tr>
     `).join("");
 
-    res.send(`
-      <html>
-      <head>
-        <title>Smoke Logs</title>
-      <style>
-        body {
-          font-family: Arial;
-          background:#111;
-          color:white;
-          margin:0;
-          padding:20px;
-        }
-      
-        h2 {
-          text-align: left;
-          margin-bottom: 20px;
-          padding-left: 5px;
-        }
-        .table-container {
-          width:100%;
-          overflow-x:auto; /* เลื่อนซ้ายขวาได้ในมือถือ */
-        }
-      
-        table {
-          border-collapse: collapse;
-          width:100%;          /* เต็มจอ */
-          min-width:700px;     /* กันตารางบีบเกินไป */
-        }
-      
-        th, td {
-          border: 1px solid #555;
-          padding: 10px;
-          text-align: center;
-          white-space: nowrap;
-        }
-      
-        th {
-          background:#222;
-        }
-      
-        tr:nth-child(even) {
-          background:#1a1a1a;
-        }
-      </style>
-      </head>
-      <body>
-        <h2>🔥 Smoke Alert Logs</h2>
-        <div class="table-container">
-          <table>
-            <tr>
-              <th>ID</th>
-              <th>Datetime</th>
-              <th>Smoke</th>
-              <th>Alcohol</th>
-              <th>LPG</th>
-              <th>Status</th>
-            </tr>
-            ${rows}
-          </table>
-        </div>
-      </body>
-      </html>
-    `);
+res.send(`
+  <html>
+  <head>
+    <title>Smoke Logs</title>
+  <style>
+    body {
+      font-family: Arial;
+      background:#111;
+      color:white;
+      margin:0;
+      padding:20px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    .table-container {
+      width:100%;
+      overflow-x:auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      width:100%;
+      min-width:700px;
+    }
+
+    th, td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    th {
+      background:#222;
+    }
+
+    tr:nth-child(even) {
+      background:#1a1a1a;
+    }
+
+    button {
+      padding:10px 15px;
+      border:none;
+      border-radius:5px;
+      cursor:pointer;
+    }
+
+    .btn-export {
+      background:#28a745;
+      color:white;
+      text-decoration:none;
+      padding:10px 15px;
+      border-radius:5px;
+      margin-right:10px;
+    }
+
+    .btn-delete {
+      background:#dc3545;
+      color:white;
+    }
+
+  </style>
+  </head>
+  <body>
+
+    <h2>🔥 Smoke Alert Logs</h2>
+
+    <div style="margin-bottom:15px;">
+      <a href="/export-excel" class="btn-export">
+        📊 Export Excel
+      </a>
+
+      <form action="/delete-all" method="GET" style="display:inline;">
+        <button type="submit" class="btn-delete">
+          🗑 Clear Data
+        </button>
+      </form>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Datetime</th>
+          <th>Smoke</th>
+          <th>Alcohol</th>
+          <th>LPG</th>
+          <th>Status</th>
+        </tr>
+        ${rows}
+      </table>
+    </div>
+
+  </body>
+  </html>
+`);
 
   } catch (err) {
     res.status(500).send("DB ERROR");
@@ -246,10 +283,58 @@ app.post("/webhook", (req, res) => {
 app.get("/delete-all", async (req, res) => {
   try {
     await pool.query("TRUNCATE TABLE smoke_logs RESTART IDENTITY;");
-    res.json({ message: "All logs deleted successfully" });
+    res.redirect("/table");
   } catch (err) {
     console.error("❌ DELETE ERROR:", err);
     res.status(500).send("DELETE ERROR");
+  }
+});
+// 📊 Export Excel
+app.get("/export-excel", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        created_at,
+        smoke,
+        alcohol,
+        lpg,
+        status
+      FROM smoke_logs
+      ORDER BY id DESC
+    `);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Smoke Logs");
+
+    worksheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Datetime", key: "created_at", width: 25 },
+      { header: "Smoke", key: "smoke", width: 15 },
+      { header: "Alcohol", key: "alcohol", width: 15 },
+      { header: "LPG", key: "lpg", width: 15 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+
+    result.rows.forEach(row => {
+      worksheet.addRow(row);
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=smoke_logs.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (err) {
+    console.error("❌ EXPORT ERROR:", err);
+    res.status(500).send("EXPORT ERROR");
   }
 });
 startServer();
