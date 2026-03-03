@@ -154,10 +154,36 @@ async function startServer() {
 //////////////////////////////////////////////////
 // ROUTES
 //////////////////////////////////////////////////
+//////////////////////////////////////////////////
+// TEST MODE CONTROL
+//////////////////////////////////////////////////
+
+let currentMode = 0; 
+// 0 = AUTO
+// 1 = Smoke
+// 2 = Alcohol
+// 3 = LPG
 
 // Root
 app.get("/", (req, res) => {
   res.send("🔥 Smoke Alert Server Running...");
+});
+
+// ให้ ESP ดึงโหมด
+app.get("/get-mode", (req, res) => {
+  res.json({ mode: currentMode });
+});
+
+// เปลี่ยนโหมดจากเว็บ
+app.get("/set-mode/:id", (req, res) => {
+
+  const mode = parseInt(req.params.id);
+
+  if (mode >= 0 && mode <= 3) {
+    currentMode = mode;
+  }
+
+  res.redirect("/table");
 });
 
 // Get all logs
@@ -358,6 +384,15 @@ res.send(`
         🗑 Clear Data
       </button>
     </form>
+
+    <hr style="margin:10px 0;">
+
+<b>Test Mode:</b><br><br>
+
+<a href="/set-mode/0" class="btn-export">🟢 AUTO</a>
+<a href="/set-mode/1" class="btn-export">🔥 Test Smoke</a>
+<a href="/set-mode/2" class="btn-export">🍺 Test Alcohol</a>
+<a href="/set-mode/3" class="btn-export">🔥 Test LPG</a>
   
   </div>
 
