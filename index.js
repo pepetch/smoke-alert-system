@@ -124,17 +124,20 @@ async function startServer() {
       CREATE TABLE IF NOT EXISTS smoke_logs (
         id SERIAL PRIMARY KEY,
         smoke FLOAT,
+        smoke_status VARCHAR(20),
         alcohol FLOAT,
+        alcohol_status VARCHAR(20),
         lpg FLOAT,
-        status VARCHAR(20),
+        lpg_status VARCHAR(20),
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    // 🔥 เพิ่มบรรทัดนี้เข้าไป
+    
     await pool.query(`
       ALTER TABLE smoke_logs
-      ALTER COLUMN created_at
-      SET DEFAULT (NOW() AT TIME ZONE 'Asia/Bangkok');
+      ADD COLUMN IF NOT EXISTS smoke_status VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS alcohol_status VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS lpg_status VARCHAR(20);
     `);
 
     console.log("✅ Table recreated completely");
@@ -165,9 +168,11 @@ app.get("/logs", async (req, res) => {
         id,
         TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
+        smoke_status,
         alcohol,
+        alcohol_status,
         lpg,
-        status
+        lpg_status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -191,7 +196,9 @@ app.get("/smokelog", async (req, res) => {
         smoke,
         alcohol,
         lpg,
-        status
+        smoke_status,
+        alcohol_status,
+        lpg_status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 1
@@ -210,40 +217,53 @@ app.get("/smokelog", async (req, res) => {
 });
 app.get("/table", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        id,
-        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
-        smoke,
-        alcohol,
-        lpg,
-        status
-      FROM smoke_logs
-      ORDER BY id DESC
-      LIMIT 50
-    `);
+  const result = await pool.query(`
+    SELECT 
+      id,
+      TO_CHAR(created_at,'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      smoke,
+      smoke_status,
+      alcohol,
+      alcohol_status,
+      lpg,
+      lpg_status
+    FROM smoke_logs
+    ORDER BY id DESC
+    LIMIT 1000
+  `);
 
-  let rows = result.rows.map(row => {
-  
-    let color = "#28a745"; // SAFE
-  
-    if(row.status === "WARNING") color = "#ffc107";
-    if(row.status === "DANGER")  color = "#fd7e14";
-    if(row.status === "FIRE")    color = "#dc3545";
-  
-    return `
+let rows = result.rows.map(row => {
+
+  function color(status){
+    if(status === "SAFE") return "#28a745";
+    if(status === "WARNING") return "#ffc107";
+    if(status === "DANGER") return "#fd7e14";
+    if(status === "FIRE") return "#dc3545";
+    return "white";
+  }
+
+  return `
     <tr>
       <td>${row.id}</td>
       <td>${row.created_at}</td>
+
       <td>${row.smoke}</td>
+      <td style="color:${color(row.smoke_status)};font-weight:bold;">
+        ${row.smoke_status}
+      </td>
+
       <td>${row.alcohol}</td>
+      <td style="color:${color(row.alcohol_status)};font-weight:bold;">
+        ${row.alcohol_status}
+      </td>
+
       <td>${row.lpg}</td>
-      <td style="color:${color}; font-weight:bold;">
-        ${row.status}
+      <td style="color:${color(row.lpg_status)};font-weight:bold;">
+        ${row.lpg_status}
       </td>
     </tr>
-    `;
-  }).join("");
+  `;
+}).join("");
 
 res.send(`
   <html>
@@ -343,14 +363,16 @@ res.send(`
 
     <div class="table-container">
       <table>
-        <tr>
-          <th>ID</th>
-          <th>Datetime</th>
-          <th>Smoke</th>
-          <th>Alcohol</th>
-          <th>LPG</th>
-          <th>Status</th>
-        </tr>
+      <tr>
+      <th>ID</th>
+      <th>Datetime</th>
+      <th>Smoke</th>
+      <th>Smoke Status</th>
+      <th>Alcohol</th>
+      <th>Alcohol Status</th>
+      <th>LPG</th>
+      <th>LPG Status</th>
+      </tr>
         ${rows}
       </table>
     </div>
@@ -367,20 +389,29 @@ res.send(`
 // Receive data from ESP8266
 app.post("/smoke", async (req, res) => {
   try {
-    const { smoke, alcohol, lpg, status } = req.body;
+    const {
+  smoke, smoke_status,
+  alcohol, alcohol_status,
+  lpg, lpg_status
+  } = req.body;
 
     if (
       smoke === undefined ||
+      smoke_status === undefined ||
       alcohol === undefined ||
+      alcohol_status === undefined ||
       lpg === undefined ||
-      !status
-    ) {
+      lpg_status === undefined
+    )
+    {
       return res.status(400).send("Missing data");
     }
 
     await pool.query(
-      "INSERT INTO smoke_logs(smoke, alcohol, lpg, status) VALUES($1,$2,$3,$4)",
-      [smoke, alcohol, lpg, status]
+      `INSERT INTO smoke_logs
+       (smoke, smoke_status, alcohol, alcohol_status, lpg, lpg_status)
+       VALUES($1,$2,$3,$4,$5,$6)`,
+      [smoke, smoke_status, alcohol, alcohol_status, lpg, lpg_status]
     );
 
     res.send("OK");
@@ -397,7 +428,7 @@ app.get("/smoke-data", async (req, res) => {
       SELECT id,
       TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       smoke,
-      status
+      smoke_status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -417,7 +448,7 @@ app.get("/smoke-data", async (req, res) => {
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.smoke}</td>
-        <td>${row.status}</td>
+        <td>${row.smoke_status}</td>
       </tr>
     `).join("");
 
@@ -436,7 +467,7 @@ app.get("/alcohol-data", async (req, res) => {
       SELECT id,
       TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       alcohol,
-      status
+      alcohol_status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -456,7 +487,7 @@ app.get("/alcohol-data", async (req, res) => {
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.alcohol}</td>
-        <td>${row.status}</td>
+        <td>${row.alcohol_status}</td>
       </tr>
     `).join("");
 
@@ -475,7 +506,7 @@ app.get("/lpg-data", async (req, res) => {
       SELECT id,
       TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       lpg,
-      status
+      lpg_status
       FROM smoke_logs
       ORDER BY id DESC
       LIMIT 50
@@ -495,7 +526,7 @@ app.get("/lpg-data", async (req, res) => {
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.lpg}</td>
-        <td>${row.status}</td>
+        <td>${row.lpg_status}</td>
       </tr>
     `).join("");
 
@@ -534,7 +565,9 @@ app.get("/export-excel", async (req, res) => {
         smoke,
         alcohol,
         lpg,
-        status
+        smoke_status,
+        alcohol_status,
+        lpg_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -546,9 +579,11 @@ app.get("/export-excel", async (req, res) => {
       { header: "ID", key: "id", width: 10 },
       { header: "Datetime", key: "created_at", width: 25 },
       { header: "Smoke", key: "smoke", width: 15 },
+      { header: "Smoke Status", key: "smoke_status", width: 15 },
       { header: "Alcohol", key: "alcohol", width: 15 },
+      { header: "Alcohol Status", key: "alcohol_status", width: 15 },
       { header: "LPG", key: "lpg", width: 15 },
-      { header: "Status", key: "status", width: 15 },
+      { header: "LPG Status", key: "lpg_status", width: 15 },
     ];
 
     result.rows.forEach(row => {
@@ -576,7 +611,7 @@ app.get("/export-excel", async (req, res) => {
 app.get("/export-smoke", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, smoke, status
+      SELECT id, created_at, smoke, smoke_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -588,7 +623,7 @@ app.get("/export-smoke", async (req, res) => {
       { header: "ID", key: "id", width: 10 },
       { header: "Datetime", key: "created_at", width: 25 },
       { header: "Smoke", key: "smoke", width: 15 },
-      { header: "Status", key: "status", width: 15 },
+      { header: "Smoke Status", key: "smoke_status", width: 15 },
     ];
 
     result.rows.forEach(row => worksheet.addRow(row));
@@ -611,7 +646,7 @@ app.get("/export-smoke", async (req, res) => {
 app.get("/export-alcohol", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, alcohol, status
+      SELECT id, created_at, alcohol, alcohol_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -623,7 +658,7 @@ app.get("/export-alcohol", async (req, res) => {
       { header: "ID", key: "id", width: 10 },
       { header: "Datetime", key: "created_at", width: 25 },
       { header: "Alcohol", key: "alcohol", width: 15 },
-      { header: "Status", key: "status", width: 15 },
+      { header: "Alcohol Status", key: "alcohol_status", width: 15 },
     ];
 
     result.rows.forEach(row => worksheet.addRow(row));
@@ -645,7 +680,7 @@ app.get("/export-alcohol", async (req, res) => {
 app.get("/export-lpg", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, lpg, status
+      SELECT id, created_at, lpg, lpg_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -657,7 +692,7 @@ app.get("/export-lpg", async (req, res) => {
       { header: "ID", key: "id", width: 10 },
       { header: "Datetime", key: "created_at", width: 25 },
       { header: "LPG", key: "lpg", width: 15 },
-      { header: "Status", key: "status", width: 15 },
+      { header: "LPG Status", key: "lpg_status", width: 15 },
     ];
 
     result.rows.forEach(row => worksheet.addRow(row));
