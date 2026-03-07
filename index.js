@@ -781,21 +781,24 @@ app.get("/export-lpg", async (req, res) => {
 // LINE ALERT FUNCTION
 //////////////////////////////////////////////////
 async function sendLine(message) {
-  try {
-    await axios.post(
-      "https://notify-api.line.me/api/notify",
-      `message=${encodeURIComponent(message)}`,
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": "Bearer " + process.env.LINE_TOKEN
-        }
-      }
-    );
-    console.log("✅ LINE ALERT SENT");
-  } catch (err) {
 
-    console.log("❌ LINE ERROR:", err.message);
-  }
+  await axios.post(
+    "https://api.line.me/v2/bot/message/push",
+    {
+      to: process.env.LINE_USER_ID,
+      messages: [
+        {
+          type: "text",
+          text: message
+        }
+      ]
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + process.env.LINE_CHANNEL_TOKEN
+      }
+    }
+  );
 }
 startServer();
