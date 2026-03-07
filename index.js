@@ -501,7 +501,7 @@ app.get("/smoke-data", async (req, res) => {
       smoke_status
       FROM smoke_logs
       ORDER BY id DESC
-      LIMIT 50
+      LIMIT 1000
     `);
 
     let headers = `
@@ -513,12 +513,21 @@ app.get("/smoke-data", async (req, res) => {
       </tr>
     `;
 
+    function color(status){
+    if(status === "SAFE") return "#28a745";
+    if(status === "WARNING") return "#ffc107";
+    if(status === "DANGER") return "#fd7e14";
+    if(status === "FIRE") return "#dc3545";
+    return "white";
+  }
     let rows = result.rows.map(row => `
       <tr>
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.smoke}</td>
-        <td>${row.smoke_status}</td>
+        <td style="color:${color(row.smoke_status)};font-weight:bold;">
+        ${row.smoke_status}
+        </td>
       </tr>
     `).join("");
 
@@ -540,7 +549,7 @@ app.get("/alcohol-data", async (req, res) => {
       alcohol_status
       FROM smoke_logs
       ORDER BY id DESC
-      LIMIT 50
+      LIMIT 1000
     `);
 
     let headers = `
@@ -551,13 +560,21 @@ app.get("/alcohol-data", async (req, res) => {
         <th>Status</th>
       </tr>
     `;
-
+    function color(status){
+    if(status === "SAFE") return "#28a745";
+    if(status === "WARNING") return "#ffc107";
+    if(status === "DANGER") return "#fd7e14";
+    if(status === "FIRE") return "#dc3545";
+    return "white";
+  }
     let rows = result.rows.map(row => `
       <tr>
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.alcohol}</td>
-        <td>${row.alcohol_status}</td>
+        <td style="color:${color(row.alcohol_status)};font-weight:bold;">
+        ${row.alcohol_status}
+        </td>
       </tr>
     `).join("");
 
@@ -579,7 +596,7 @@ app.get("/lpg-data", async (req, res) => {
       lpg_status
       FROM smoke_logs
       ORDER BY id DESC
-      LIMIT 50
+      LIMIT 1000
     `);
 
     let headers = `
@@ -590,13 +607,21 @@ app.get("/lpg-data", async (req, res) => {
         <th>Status</th>
       </tr>
     `;
-
+    function color(status){
+    if(status === "SAFE") return "#28a745";
+    if(status === "WARNING") return "#ffc107";
+    if(status === "DANGER") return "#fd7e14";
+    if(status === "FIRE") return "#dc3545";
+    return "white";
+  }
     let rows = result.rows.map(row => `
       <tr>
         <td>${row.id}</td>
         <td>${row.created_at}</td>
         <td>${row.lpg}</td>
-        <td>${row.lpg_status}</td>
+        <td style="color:${color(row.lpg_status)};font-weight:bold;">
+        ${row.lpg_status}
+        </td>
       </tr>
     `).join("");
 
