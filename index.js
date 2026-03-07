@@ -470,12 +470,14 @@ app.post("/smoke", async (req, res) => {
     if (Date.now() - lastAlertTime > ALERT_COOLDOWN) {
   
       await sendLine(
-  `🚨 GAS ALERT
+  `🚨 Smoke Alert
   
-  Smoke: ${smoke} (${smoke_status})
-  Alcohol: ${alcohol} (${alcohol_status})
-  LPG: ${lpg} (${lpg_status})`
-      );
+  🔥 Smoke: ${smoke} ppm (${smoke_status})
+  🍺 Alcohol: ${alcohol} ppm (${alcohol_status})
+  🔥 LPG: ${lpg} ppm (${lpg_status})
+  
+  ⚠️ System detected dangerous gas level`
+  );
   
       lastAlertTime = Date.now();
   
@@ -782,23 +784,35 @@ app.get("/export-lpg", async (req, res) => {
 //////////////////////////////////////////////////
 async function sendLine(message) {
 
-  await axios.post(
-    "https://api.line.me/v2/bot/message/push",
-    {
-      to: process.env.LINE_USER_ID,
-      messages: [
-        {
-          type: "text",
-          text: message
+  if (!process.env.LINE_CHANNEL_TOKEN || !process.env.LINE_USER_ID) {
+    console.log("⚠ LINE ENV NOT SET");
+    return;
+  }
+
+  try {
+    await axios.post(
+      "https://api.line.me/v2/bot/message/push",
+      {
+        to: process.env.LINE_USER_ID,
+        messages: [
+          {
+            type: "text",
+            text: message
+          }
+        ]
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + process.env.LINE_CHANNEL_TOKEN
         }
-      ]
-    },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.LINE_CHANNEL_TOKEN
       }
-    }
-  );
+    );
+
+    console.log("✅ LINE ALERT SENT");
+
+  } catch (err) {
+    console.log("❌ LINE ERROR:", err.response?.data || err.message);
+  }
 }
 startServer();
