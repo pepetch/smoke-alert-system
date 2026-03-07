@@ -365,7 +365,7 @@ res.send(`
   </head>
   <body>
 
-    <h2>🔥 Smoke Alert Logs</h2>
+    <h2>🔥 Alert Logs</h2>
 
   <div style="margin-bottom:15px;">
   
@@ -374,15 +374,15 @@ res.send(`
     </a>
   
     <a href="/smoke-data" class="btn-export">
-      🔥 Smoke
+      💨 Smoke
     </a>
   
     <a href="/alcohol-data" class="btn-export">
-      🍺 Alcohol
+      🧴 Alcohol
     </a>
   
     <a href="/lpg-data" class="btn-export">
-      🔥 LPG
+      🧯 LPG
     </a>
   
     <form action="/delete-all" method="GET" style="display:inline;">
@@ -396,9 +396,9 @@ res.send(`
 <b>Test Mode:</b><br><br>
 
 <a href="/set-mode/0" class="btn-export">🟢 AUTO</a>
-<a href="/set-mode/1" class="btn-export">🔥 Test Smoke</a>
-<a href="/set-mode/2" class="btn-export">🍺 Test Alcohol</a>
-<a href="/set-mode/3" class="btn-export">🔥 Test LPG</a>
+<a href="/set-mode/1" class="btn-export">💨 Test Smoke</a>
+<a href="/set-mode/2" class="btn-export">🧴 Test Alcohol</a>
+<a href="/set-mode/3" class="btn-export">🧯 Test LPG</a>
   
   </div>
 
@@ -472,9 +472,9 @@ app.post("/smoke", async (req, res) => {
       await sendLine(
   `🚨 Smoke Alert
   
-  🔥 Smoke: ${smoke} ppm (${smoke_status})
-  🍺 Alcohol: ${alcohol} ppm (${alcohol_status})
-  🔥 LPG: ${lpg} ppm (${lpg_status})
+  💨 Smoke: ${smoke} ppm (${smoke_status})
+  🧴 Alcohol: ${alcohol} ppm (${alcohol_status})
+  🧯 LPG: ${lpg} ppm (${lpg_status})
   
   ⚠️ System detected dangerous gas level`
   );
@@ -532,7 +532,7 @@ app.get("/smoke-data", async (req, res) => {
     `).join("");
 
 res.send(
-  renderSubPage("🔥 Smoke Data", headers, rows, "/export-smoke")
+  renderSubPage("💨 Smoke Data", headers, rows, "/export-smoke")
 );
 
   } catch (err) {
@@ -579,7 +579,7 @@ app.get("/alcohol-data", async (req, res) => {
     `).join("");
 
 res.send(
-  renderSubPage("🍺 Alcohol Data", headers, rows, "/export-alcohol")
+  renderSubPage("🧴 Alcohol Data", headers, rows, "/export-alcohol")
 );
 
   } catch (err) {
@@ -626,7 +626,7 @@ app.get("/lpg-data", async (req, res) => {
     `).join("");
 
 res.send(
-  renderSubPage("🔥 LPG Data", headers, rows, "/export-lpg")
+  renderSubPage("🧯 LPG Data", headers, rows, "/export-lpg")
 );
 
   } catch (err) {
