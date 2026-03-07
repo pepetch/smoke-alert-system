@@ -5,7 +5,12 @@ const axios = require("axios");
 
 const app = express();
 app.use(express.json());
+//////////////////////////////////////////////////
+// LINE ALERT SYSTEM
+//////////////////////////////////////////////////
 
+let lastAlertTime = 0;
+const ALERT_COOLDOWN = 30000; // 30 วินาที
 //////////////////////////////////////////////////
 // CONNECT POSTGRES
 //////////////////////////////////////////////////
@@ -449,7 +454,34 @@ app.post("/smoke", async (req, res) => {
        VALUES($1,$2,$3,$4,$5,$6)`,
       [smoke, smoke_status, alcohol, alcohol_status, lpg, lpg_status]
     );
-
+  //////////////////////////////////////////////////
+  // LINE ALERT
+  //////////////////////////////////////////////////
+  
+  if (
+    smoke_status === "DANGER" ||
+    smoke_status === "FIRE" ||
+    alcohol_status === "DANGER" ||
+    alcohol_status === "FIRE" ||
+    lpg_status === "DANGER" ||
+    lpg_status === "FIRE"
+  ) {
+  
+    if (Date.now() - lastAlertTime > ALERT_COOLDOWN) {
+  
+      await sendLine(
+  `🚨 GAS ALERT
+  
+  Smoke: ${smoke} (${smoke_status})
+  Alcohol: ${alcohol} (${alcohol_status})
+  LPG: ${lpg} (${lpg_status})`
+      );
+  
+      lastAlertTime = Date.now();
+  
+    }
+  
+  }
     res.send("OK");
 
   } catch (err) {
@@ -743,6 +775,27 @@ app.get("/export-lpg", async (req, res) => {
 
   } catch (err) {
     res.status(500).send("EXPORT ERROR");
-  }
+  } 
 });
+//////////////////////////////////////////////////
+// LINE ALERT FUNCTION
+//////////////////////////////////////////////////
+async function sendLine(message) {
+  try {
+    await axios.post(
+      "https://notify-api.line.me/api/notify",
+      `message=${encodeURIComponent(message)}`,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Bearer " + process.env.LINE_TOKEN
+        }
+      }
+    );
+    console.log("✅ LINE ALERT SENT");
+  } catch (err) {
+
+    console.log("❌ LINE ERROR:", err.message);
+  }
+}
 startServer();
