@@ -12,6 +12,7 @@ app.use(express.json());
 let lastSmokeAlert = 0;
 let lastAlcoholAlert = 0;
 let lastLpgAlert = 0;
+let lastGlobalAlert = 0;
 
 const FIRE_COOLDOWN = 60000;      // 1 นาที
 const DANGER_COOLDOWN = 300000;   // 5 นาที
@@ -532,7 +533,8 @@ if (lpg_status === "FIRE" || lpg_status === "DANGER") {
 // SEND LINE
 //////////////////////////////////////////////////
 
-if (shouldSend) {
+if (shouldSend && Date.now() - lastGlobalAlert > GLOBAL_ALERT_COOLDOWN) {
+  lastGlobalAlert = Date.now();
   await sendLine(message);
 }
 
