@@ -13,7 +13,6 @@ let lastSmokeAlert = 0;
 let lastAlcoholAlert = 0;
 let lastLpgAlert = 0;
 
-
 const FIRE_COOLDOWN = 60000;      // 1 นาที
 const DANGER_COOLDOWN = 300000;   // 5 นาที
 //////////////////////////////////////////////////
@@ -435,6 +434,7 @@ res.send(`
 // Receive data from ESP8266
 app.post("/smoke", async (req, res) => {
   try {
+    let shouldSend = false;
     const {
   smoke, smoke_status,
   alcohol, alcohol_status,
@@ -490,8 +490,8 @@ if (smoke_status === "FIRE" || smoke_status === "DANGER") {
     smoke_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
 
   if (Date.now() - lastSmokeAlert > cooldown) {
-    await sendLine(message);
     lastSmokeAlert = Date.now();
+    shouldSend = true;
   }
 
 }
@@ -506,8 +506,8 @@ if (alcohol_status === "FIRE" || alcohol_status === "DANGER") {
     alcohol_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
 
   if (Date.now() - lastAlcoholAlert > cooldown) {
-    await sendLine(message);
     lastAlcoholAlert = Date.now();
+    shouldSend = true;
   }
 
 }
@@ -522,15 +522,21 @@ if (lpg_status === "FIRE" || lpg_status === "DANGER") {
     lpg_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
 
   if (Date.now() - lastLpgAlert > cooldown) {
-    await sendLine(message);
     lastLpgAlert = Date.now();
+    shouldSend = true;
   }
 
 }
 
-  
-  }
-    res.send("OK");
+//////////////////////////////////////////////////
+// SEND LINE
+//////////////////////////////////////////////////
+
+if (shouldSend) {
+  await sendLine(message);
+}
+
+res.send("OK");
 
   } catch (err) {
     console.error("❌ INSERT ERROR:", err);
@@ -987,6 +993,17 @@ function getAdvice(smokeStatus, alcoholStatus, lpgStatus) {
 
   return advice.trim();
 }
+function statusEmoji(status) {
+
+  if (status === "SAFE") return "🟢 SAFE";
+  if (status === "WARNING") return "🟡 WARNING";
+  if (status === "DANGER") return "🟠 DANGER";
+  if (status === "FIRE") return "🔴 FIRE";
+
+  return status;
+}
+
+
 function buildLineMessage(smoke, alcohol, lpg, smokeStatus, alcoholStatus, lpgStatus, time) {
 
   const risk = getRiskLevel(smokeStatus, alcoholStatus, lpgStatus);
@@ -996,9 +1013,9 @@ return `
 🚨 Smoke Alert
 
 📊 ค่าที่ตรวจวัดได้
-🔥 Smoke   : ${smoke} ppm (${smokeStatus})
-🧴 Alcohol : ${alcohol} ppm (${alcoholStatus})
-⛽ LPG     : ${lpg} ppm (${lpgStatus})
+🔥 Smoke   : ${smoke} ppm ${statusEmoji(smokeStatus)}
+🧴 Alcohol : ${alcohol} ppm ${statusEmoji(alcoholStatus)}
+⛽ LPG     : ${lpg} ppm ${statusEmoji(lpgStatus)}
 
 ⚠️ ระดับความเสี่ยง : ${risk}
 
