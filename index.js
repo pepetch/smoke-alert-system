@@ -16,6 +16,7 @@ let lastGlobalAlert = 0;
 
 const FIRE_COOLDOWN = 60000;      // 1 นาที
 const DANGER_COOLDOWN = 300000;   // 5 นาที
+const GLOBAL_ALERT_COOLDOWN = 15000; // กัน spam 15 วินาที
 //////////////////////////////////////////////////
 // CONNECT POSTGRES
 //////////////////////////////////////////////////
