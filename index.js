@@ -10,7 +10,8 @@ app.use(express.json());
 //////////////////////////////////////////////////
 
 let lastAlertTime = 0;
-const ALERT_COOLDOWN = 30000; // 30 วินาที
+const FIRE_COOLDOWN = 60000;      // 1 นาที
+const DANGER_COOLDOWN = 300000;   // 5 นาที
 //////////////////////////////////////////////////
 // CONNECT POSTGRES
 //////////////////////////////////////////////////
@@ -467,21 +468,37 @@ app.post("/smoke", async (req, res) => {
     lpg_status === "FIRE"
   ) {
   
-    if (Date.now() - lastAlertTime > ALERT_COOLDOWN) {
-  
-      await sendLine(
-  `🚨 Smoke Alert
-  
-  💨 Smoke: ${smoke} ppm (${smoke_status})
-  🧴 Alcohol: ${alcohol} ppm (${alcohol_status})
-  🧯 LPG: ${lpg} ppm (${lpg_status})
-  
-  ⚠️ System detected dangerous gas level`
+    let cooldown = 0;
+
+if (
+  smoke_status === "FIRE" ||
+  alcohol_status === "FIRE" ||
+  lpg_status === "FIRE"
+) {
+  cooldown = FIRE_COOLDOWN;
+} 
+else {
+  cooldown = DANGER_COOLDOWN;
+}
+
+if (Date.now() - lastAlertTime > cooldown) {
+
+  const time = new Date().toLocaleString("th-TH");
+
+  const message = buildLineMessage(
+    smoke,
+    alcohol,
+    lpg,
+    smoke_status,
+    alcohol_status,
+    lpg_status,
+    time
   );
-  
-      lastAlertTime = Date.now();
-  
-    }
+
+  await sendLine(message);
+
+  lastAlertTime = Date.now();
+}
   
   }
     res.send("OK");
@@ -842,5 +859,124 @@ async function sendLine(message) {
   } catch (err) {
     console.log("❌ LINE ERROR:", err.response?.data || err.message);
   }
+}
+
+function getRiskLevel(smokeStatus, alcoholStatus, lpgStatus) {
+
+  if (
+    smokeStatus === "FIRE" ||
+    alcoholStatus === "FIRE" ||
+    lpgStatus === "FIRE"
+  ) {
+    return "HIGH RISK";
+  }
+
+  if (
+    smokeStatus === "DANGER" ||
+    alcoholStatus === "DANGER" ||
+    lpgStatus === "DANGER"
+  ) {
+    return "MEDIUM RISK";
+  }
+
+  return "LOW RISK";
+}
+function getAdvice(smokeStatus, alcoholStatus, lpgStatus) {
+
+  let advice = "";
+
+  if (smokeStatus === "FIRE") {
+    advice += `
+💨 Smoke (🔴FIRE)
+🆘ตรวจพบค่าควันในระดับอันตราย
+มีความเสี่ยงต่อการเกิดเพลิงไหม้
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+หลีกเลี่ยงการใช้ลิฟต์ หากพบเปลวไฟให้รีบดับเพลิง 
+และอพยพออกจากพื้นที่โดยเร็ว
+`;
+  }
+
+  if (smokeStatus === "DANGER") {
+    advice += `
+💨 Smoke (🟠DANGER)
+🆘ตรวจพบค่าควันสูงกว่าปกติ
+อาจเกิดการเผาไหม้หรือมีแหล่งกำเนิดควันในพื้นที่
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+เพิ่มการระบายอากาศ และเฝ้าระวังความเสี่ยงต่อการเกิดเพลิงไหม้
+`;
+  }
+
+  if (lpgStatus === "FIRE") {
+    advice += `
+⛽ LPG (🔴FIRE)
+🆘ตรวจพบก๊าซ LPG ในระดับอันตราย
+อาจเกิดการรั่วไหลของก๊าซและเสี่ยงต่อการระเบิด
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+โปรดปิดคัตเอ้าหรือแหล่งจ่ายไฟทันที
+หลีกเลี่ยงประกายไฟ และอพยพออกจากพื้นที่โดยเร็ว
+`;
+  }
+
+  if (lpgStatus === "DANGER") {
+    advice += `
+⛽ LPG (🟠DANGER)
+🆘ตรวจพบค่าก๊าซ LPG สูงกว่าปกติ
+อาจมีการรั่วไหลของก๊าซในพื้นที่
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+ตรวจสอบจุดที่อาจเกิดการรั่วไหล
+เพิ่มการระบายอากาศ และหลีกเลี่ยงการใช้ประกายไฟ
+`;
+  }
+
+  if (alcoholStatus === "FIRE") {
+    advice += `
+🧴 Alcohol (🔴FIRE)
+🆘ตรวจพบไอแอลกอฮอล์ในระดับอันตราย
+มีความเสี่ยงต่อการติดไฟได้ง่าย
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+โปรดปิดคัตเอ้าและหลีกเลี่ยงประกายไฟ
+หากกลิ่นรุนแรงหรือมีความเสี่ยงสูง ให้รีบออกจากพื้นที่ทันที
+`;
+  }
+
+  if (alcoholStatus === "DANGER") {
+    advice += `
+🧴 Alcohol (🟠DANGER)
+🆘ตรวจพบค่าไอแอลกอฮอล์สูงกว่าปกติ
+อาจเกิดการสะสมของไอระเหยในพื้นที่
+
+⚠️โปรดตรวจสอบพื้นที่ทันที
+โปรดตรวจสอบพื้นที่และเพิ่มการระบายอากาศ
+หลีกเลี่ยงประกายไฟหรือเปลวไฟ
+`;
+  }
+
+  return advice.trim();
+}
+function buildLineMessage(smoke, alcohol, lpg, smokeStatus, alcoholStatus, lpgStatus, time) {
+
+  const risk = getRiskLevel(smokeStatus, alcoholStatus, lpgStatus);
+  const advice = getAdvice(smokeStatus, alcoholStatus, lpgStatus);
+
+return `
+🚨 Smoke Alert
+
+📊 ค่าที่ตรวจวัดได้
+🔥 Smoke   : ${smoke} ppm (${smokeStatus})
+🧴 Alcohol : ${alcohol} ppm (${alcoholStatus})
+⛽ LPG     : ${lpg} ppm (${lpgStatus})
+
+⚠️ ระดับความเสี่ยง : ${risk}
+
+📌 คำแนะนำในการปฏิบัติ
+${advice}
+
+Time : ${time}
+`.trim();
 }
 startServer();
