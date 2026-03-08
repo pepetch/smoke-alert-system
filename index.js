@@ -9,7 +9,11 @@ app.use(express.json());
 // LINE ALERT SYSTEM
 //////////////////////////////////////////////////
 
-let lastAlertTime = 0;
+let lastSmokeAlert = 0;
+let lastAlcoholAlert = 0;
+let lastLpgAlert = 0;
+
+
 const FIRE_COOLDOWN = 60000;      // 1 นาที
 const DANGER_COOLDOWN = 300000;   // 5 นาที
 //////////////////////////////////////////////////
@@ -455,50 +459,75 @@ app.post("/smoke", async (req, res) => {
        VALUES($1,$2,$3,$4,$5,$6)`,
       [smoke, smoke_status, alcohol, alcohol_status, lpg, lpg_status]
     );
-  //////////////////////////////////////////////////
-  // LINE ALERT
-  //////////////////////////////////////////////////
   
-  if (
-    smoke_status === "DANGER" ||
-    smoke_status === "FIRE" ||
-    alcohol_status === "DANGER" ||
-    alcohol_status === "FIRE" ||
-    lpg_status === "DANGER" ||
-    lpg_status === "FIRE"
-  ) {
-  
-    let cooldown = 0;
+ const time = new Date().toLocaleString("th-TH", {
+  timeZone: "Asia/Bangkok",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit"
+});
 
-if (
-  smoke_status === "FIRE" ||
-  alcohol_status === "FIRE" ||
-  lpg_status === "FIRE"
-) {
-  cooldown = FIRE_COOLDOWN;
-} 
-else {
-  cooldown = DANGER_COOLDOWN;
+const message = buildLineMessage(
+  smoke,
+  alcohol,
+  lpg,
+  smoke_status,
+  alcohol_status,
+  lpg_status,
+  time
+);
+
+//////////////////////////////////////////////////
+// SMOKE ALERT
+//////////////////////////////////////////////////
+
+if (smoke_status === "FIRE" || smoke_status === "DANGER") {
+
+  const cooldown =
+    smoke_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
+
+  if (Date.now() - lastSmokeAlert > cooldown) {
+    await sendLine(message);
+    lastSmokeAlert = Date.now();
+  }
+
 }
 
-if (Date.now() - lastAlertTime > cooldown) {
+//////////////////////////////////////////////////
+// ALCOHOL ALERT
+//////////////////////////////////////////////////
 
-  const time = new Date().toLocaleString("th-TH");
+if (alcohol_status === "FIRE" || alcohol_status === "DANGER") {
 
-  const message = buildLineMessage(
-    smoke,
-    alcohol,
-    lpg,
-    smoke_status,
-    alcohol_status,
-    lpg_status,
-    time
-  );
+  const cooldown =
+    alcohol_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
 
-  await sendLine(message);
+  if (Date.now() - lastAlcoholAlert > cooldown) {
+    await sendLine(message);
+    lastAlcoholAlert = Date.now();
+  }
 
-  lastAlertTime = Date.now();
 }
+
+//////////////////////////////////////////////////
+// LPG ALERT
+//////////////////////////////////////////////////
+
+if (lpg_status === "FIRE" || lpg_status === "DANGER") {
+
+  const cooldown =
+    lpg_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
+
+  if (Date.now() - lastLpgAlert > cooldown) {
+    await sendLine(message);
+    lastLpgAlert = Date.now();
+  }
+
+}
+
   
   }
     res.send("OK");
