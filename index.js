@@ -656,7 +656,7 @@ app.get("/export-excel", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        created_at,
+        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -706,7 +706,8 @@ app.get("/export-excel", async (req, res) => {
 app.get("/export-smoke", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, smoke, smoke_status
+      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at, 
+      smoke, smoke_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -741,7 +742,8 @@ app.get("/export-smoke", async (req, res) => {
 app.get("/export-alcohol", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, alcohol, alcohol_status
+      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      alcohol, alcohol_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
@@ -775,7 +777,8 @@ app.get("/export-alcohol", async (req, res) => {
 app.get("/export-lpg", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, created_at, lpg, lpg_status
+      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      lpg, lpg_status
       FROM smoke_logs
       ORDER BY id DESC
     `);
