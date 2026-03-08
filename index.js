@@ -1013,7 +1013,7 @@ return `
 🚨 Smoke Alert
 
 📊 ค่าที่ตรวจวัดได้
-🔥 Smoke   : ${smoke} ppm ${statusEmoji(smokeStatus)}
+💨 Smoke   : ${smoke} ppm ${statusEmoji(smokeStatus)}
 🧴 Alcohol : ${alcohol} ppm ${statusEmoji(alcoholStatus)}
 ⛽ LPG     : ${lpg} ppm ${statusEmoji(lpgStatus)}
 
