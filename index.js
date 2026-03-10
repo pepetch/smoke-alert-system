@@ -867,16 +867,15 @@ app.get("/export-lpg", async (req, res) => {
 //////////////////////////////////////////////////
 async function sendLine(message) {
 
-  if (!process.env.LINE_CHANNEL_TOKEN || !process.env.LINE_USER_ID) {
-    console.log("⚠ LINE ENV NOT SET");
+  if (!process.env.LINE_CHANNEL_TOKEN) {
+    console.log("⚠ LINE TOKEN NOT SET");
     return;
   }
 
   try {
     await axios.post(
-      "https://api.line.me/v2/bot/message/push",
+      "https://api.line.me/v2/bot/message/broadcast",
       {
-        to: process.env.LINE_USER_ID,
         messages: [
           {
             type: "text",
@@ -892,7 +891,7 @@ async function sendLine(message) {
       }
     );
 
-    console.log("✅ LINE ALERT SENT");
+    console.log("✅ LINE BROADCAST SENT");
 
   } catch (err) {
     console.log("❌ LINE ERROR:", err.response?.data || err.message);
