@@ -479,7 +479,8 @@ const message = buildLineMessage(
   smoke_status,
   alcohol_status,
   lpg_status,
-  time
+  time,
+  currentMode
 );
 
 //////////////////////////////////////////////////
@@ -985,22 +986,98 @@ function statusEmoji(status) {
 
   return status;
 }
+function buildLineMessage(smoke, alcohol, lpg, smokeStatus, alcoholStatus, lpgStatus, time, mode) {
 
+let gasText = "";
+let advice = "";
+let risk = "LOW RISK";
 
-function buildLineMessage(smoke, alcohol, lpg, smokeStatus, alcoholStatus, lpgStatus, time) {
+//////////////////////////////////////////////////
+// SMOKE
+//////////////////////////////////////////////////
 
-  const risk = getRiskLevel(smokeStatus, alcoholStatus, lpgStatus);
-  const advice = getAdvice(smokeStatus, alcoholStatus, lpgStatus);
+if (mode === 1 || mode === 0) {
+
+gasText = `💨 Smoke : ${smoke} ppm ${statusEmoji(smokeStatus)}`;
+
+if (smokeStatus === "FIRE") {
+risk = "HIGH RISK";
+advice = `
+💨 Smoke (🔴FIRE)
+🆘ตรวจพบควันในระดับอันตราย เสี่ยงเกิดเพลิงไหม้
+⚠️โปรดตรวจสอบพื้นที่ทันทีและออกจากพื้นที่โดยเร็ว`;
+}
+
+if (smokeStatus === "DANGER") {
+risk = "MEDIUM RISK";
+advice = `
+💨 Smoke (🟠DANGER)
+🆘ตรวจพบควันสูงกว่าปกติ อาจมีการเผาไหม้
+⚠️โปรดตรวจสอบพื้นที่ทันที และเพิ่มการระบายอากาศ`;
+}
+
+}
+
+//////////////////////////////////////////////////
+// ALCOHOL
+//////////////////////////////////////////////////
+
+if (mode === 2) {
+
+gasText = `🧴 Alcohol : ${alcohol} ppm ${statusEmoji(alcoholStatus)}`;
+
+if (alcoholStatus === "FIRE") {
+risk = "HIGH RISK";
+advice = `
+🧴 Alcohol (🔴FIRE)
+🆘ตรวจพบไอแอลกอฮอล์ในระดับอันตราย เสี่ยงติดไฟ
+⚠️หลีกเลี่ยงประกายไฟ และออกจากพื้นที่โดยเร็ว`;
+}
+
+if (alcoholStatus === "DANGER") {
+risk = "MEDIUM RISK";
+advice = `
+🧴 Alcohol (🟠DANGER)
+🆘ตรวจพบไอแอลกอฮอล์สูงกว่าปกติ
+⚠️เพิ่มการระบายอากาศ และหลีกเลี่ยงประกายไฟ`;
+}
+
+}
+
+//////////////////////////////////////////////////
+// LPG
+//////////////////////////////////////////////////
+
+if (mode === 3) {
+
+gasText = `⛽ LPG : ${lpg} ppm ${statusEmoji(lpgStatus)}`;
+
+if (lpgStatus === "FIRE") {
+risk = "HIGH RISK";
+advice = `
+⛽ LPG (🔴FIRE)
+🆘ตรวจพบก๊าซ LPG ในระดับอันตราย เสี่ยงระเบิด
+⚠️หลีกเลี่ยงประกายไฟ และออกจากพื้นที่โดยเร็ว`;
+}
+
+if (lpgStatus === "DANGER") {
+risk = "MEDIUM RISK";
+advice = `
+⛽ LPG (🟠DANGER)
+🆘ตรวจพบก๊าซ LPG สูงกว่าปกติ อาจมีการรั่วไหล
+⚠️ตรวจสอบจุดรั่ว และเพิ่มการระบายอากาศ`;
+}
+
+}
 
 return `
 🚨 Smoke Alert Notification
 
 📊 ค่าที่ตรวจวัดได้
-💨 Smoke   : ${smoke} ppm ${statusEmoji(smokeStatus)}
-🧴 Alcohol : ${alcohol} ppm ${statusEmoji(alcoholStatus)}
-⛽ LPG     : ${lpg} ppm ${statusEmoji(lpgStatus)}
+${gasText}
 
 ⚠️ ระดับความเสี่ยง : ${risk}
+
 📌 คำแนะนำในการปฏิบัติ
 ${advice}
 
