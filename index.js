@@ -486,7 +486,8 @@ const message = buildLineMessage(
 // SMOKE ALERT
 //////////////////////////////////////////////////
 
-if (smoke_status === "FIRE" || smoke_status === "DANGER") {
+if ((currentMode === 0 || currentMode === 1) &&
+   (smoke_status === "FIRE" || smoke_status === "DANGER")) {
 
   const cooldown =
     smoke_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
@@ -502,7 +503,8 @@ if (smoke_status === "FIRE" || smoke_status === "DANGER") {
 // ALCOHOL ALERT
 //////////////////////////////////////////////////
 
-if (alcohol_status === "FIRE" || alcohol_status === "DANGER") {
+if ((currentMode === 0 || currentMode === 2) &&
+   (alcohol_status === "FIRE" || alcohol_status === "DANGER")) {
 
   const cooldown =
     alcohol_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
@@ -518,7 +520,8 @@ if (alcohol_status === "FIRE" || alcohol_status === "DANGER") {
 // LPG ALERT
 //////////////////////////////////////////////////
 
-if (lpg_status === "FIRE" || lpg_status === "DANGER") {
+if ((currentMode === 0 || currentMode === 3) &&
+   (lpg_status === "FIRE" || lpg_status === "DANGER")) {
 
   const cooldown =
     lpg_status === "FIRE" ? FIRE_COOLDOWN : DANGER_COOLDOWN;
