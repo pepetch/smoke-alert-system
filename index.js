@@ -127,7 +127,7 @@ function renderSubPage(title, headers, rows, exportUrl) {
 
 async function startServer() {
   try {
-    await pool.query("SELECT NOW()");
+    await pool.query("SET TIME ZONE 'Asia/Bangkok'");
     console.log("✅ Database Connected");
 
 
@@ -204,7 +204,7 @@ app.get("/logs", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         smoke_status,
         alcohol,
@@ -230,7 +230,7 @@ app.get("/smokelog", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -258,7 +258,7 @@ app.get("/table", async (req, res) => {
   const result = await pool.query(`
     SELECT 
       id,
-      TO_CHAR(created_at,'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok','DD/MM/YYYY HH24:MI:SS') AS created_at,
       smoke,
       smoke_status,
       alcohol,
@@ -555,7 +555,7 @@ app.get("/smoke-data", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       smoke,
       smoke_status
       FROM smoke_logs
@@ -603,7 +603,7 @@ app.get("/alcohol-data", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       alcohol,
       alcohol_status
       FROM smoke_logs
@@ -650,7 +650,7 @@ app.get("/lpg-data", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id,
-      TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       lpg,
       lpg_status
       FROM smoke_logs
@@ -715,7 +715,7 @@ app.get("/export-excel", async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id,
-        TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
         smoke,
         alcohol,
         lpg,
@@ -765,7 +765,7 @@ app.get("/export-excel", async (req, res) => {
 app.get("/export-smoke", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at, 
+      SELECT id, TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at, 
       smoke, smoke_status
       FROM smoke_logs
       ORDER BY id DESC
@@ -801,7 +801,7 @@ app.get("/export-smoke", async (req, res) => {
 app.get("/export-alcohol", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      SELECT id, TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       alcohol, alcohol_status
       FROM smoke_logs
       ORDER BY id DESC
@@ -836,7 +836,7 @@ app.get("/export-alcohol", async (req, res) => {
 app.get("/export-lpg", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') AS created_at,
+      SELECT id, TO_CHAR(created_at AT TIME ZONE 'Asia/Bangkok', 'DD/MM/YYYY HH24:MI:SS') AS created_at,
       lpg, lpg_status
       FROM smoke_logs
       ORDER BY id DESC
